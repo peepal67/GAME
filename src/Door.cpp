@@ -9,7 +9,8 @@ Door::Door(Vector3 pos, Vector3 sz, bool lock, int keyId, Texture2D* texture)
     model = LoadModelFromMesh(m);
 
     if (texture != nullptr) {
-        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = *texture;
+        SetMaterialTexture(&model.materials[0], MATERIAL_MAP_ALBEDO, *texture);
+        model.materials[0].maps[MATERIAL_MAP_ALBEDO].color = WHITE;
     }
 }
 
@@ -53,8 +54,9 @@ BoundingBox Door::GetBoundingBox() {
 }
 
 void Door::Draw() const {
-    // Keep the wood grain visible while making the two door states obvious.
-    Color tint = isOpen ? GREEN : RED;
+    // A light tint keeps the actual wood-plank image visible in both states.
+    Color tint = isOpen ? Color{ 140, 255, 160, 255 }
+                        : Color{ 255, 145, 125, 255 };
 
     // Pressing E changes directly between full states. When open, the door
     // pivots about its left edge and rests visibly inside the room.

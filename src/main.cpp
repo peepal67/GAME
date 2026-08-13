@@ -10,6 +10,12 @@
 #include <iostream>
 #include <vector>
 
+namespace {
+constexpr const char* rockWallTexturePath = "assets/textures/rock_wall_16_diff_1k.jpg";
+constexpr const char* floorTexturePath = "assets/textures/black_painted_planks_diff_1k (1).jpg";
+constexpr const char* doorTexturePath = "assets/textures/wood_planks_dirt_diff_1k.jpg";
+}
+
 int main(void)
 {
     // Initialization
@@ -26,16 +32,31 @@ int main(void)
     const float wallThickness = 0.25f;
     const float wallCenterY = roomHeight / 2.0f;
 
-    Texture2D rockWallTexture = LoadTexture("assets/textures/rock_wall_16_diff_1k.jpg");
-    Texture2D floorTexture = LoadTexture("assets/textures/black_painted_planks_diff_1k (1).jpg");
-    Texture2D doorTexture = LoadTexture("assets/textures/wood_planks_dirt_diff_1k.jpg");
+    // Exact texture-file paths inside assets/textures.
+    Texture2D rockWallTexture = LoadTexture(rockWallTexturePath);
+    Texture2D floorTexture = LoadTexture(floorTexturePath);
+    Texture2D doorTexture = LoadTexture(doorTexturePath);
+
+    if (rockWallTexture.id == 0 || floorTexture.id == 0 || doorTexture.id == 0) {
+        CloseWindow();
+        return 1;
+    }
+
     SetTextureWrap(rockWallTexture, TEXTURE_WRAP_REPEAT);
     SetTextureWrap(floorTexture, TEXTURE_WRAP_REPEAT);
     SetTextureWrap(doorTexture, TEXTURE_WRAP_REPEAT);
+    SetTextureFilter(rockWallTexture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(floorTexture, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(doorTexture, TEXTURE_FILTER_BILINEAR);
 
     Mesh floorMesh = GenMeshPlane(roomWidth, roomDepth, 1, 1);
+    for (int vertex = 0; vertex < floorMesh.vertexCount; vertex++) {
+        floorMesh.texcoords[vertex * 2] *= roomWidth / 2.0f;
+        floorMesh.texcoords[vertex * 2 + 1] *= roomDepth / 2.0f;
+    }
     Model floorModel = LoadModelFromMesh(floorMesh);
-    floorModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = floorTexture;
+    SetMaterialTexture(&floorModel.materials[0], MATERIAL_MAP_ALBEDO, floorTexture);
+    floorModel.materials[0].maps[MATERIAL_MAP_ALBEDO].color = WHITE;
 
     // The camera starts at a normal eye height inside the room.
     Player player({0, 1.75f, 6});
@@ -143,11 +164,14 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BLUE);
+            ClearBackground(Color{ 22, 28, 38, 255 });
 
             BeginMode3D(player.camera);
 
                 DrawModel(floorModel, {0, 0, 0}, 1.0f, WHITE);
+
+                // A visible ceiling light gives the room a clear focal point.
+                DrawSphere({0, roomHeight - 0.18f, 0}, 0.16f, Color{255, 225, 150, 255});
 
                 for (const Wall* wall : walls) {
                     wall->Draw();
