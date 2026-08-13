@@ -25,17 +25,19 @@ int main(void)
 
     // Test pickups
     Item keyItem = { ITEM_KEY_RUSTY, "Rusty Key" };
-    // A simple room: the door is the only opening in the back wall.
-    Wall leftWall({-5, 1, 0}, {0.25f, 2, 10}, GRAY);
-    Wall rightWall({5, 1, 0}, {0.25f, 2, 10}, GRAY);
-    Wall frontWall({0, 1, 5}, {10, 2, 0.25f}, GRAY);
-    Wall backWallLeft({-2.75f, 1, -5}, {4.5f, 2, 0.25f}, GRAY);
-    Wall backWallRight({2.75f, 1, -5}, {4.5f, 2, 0.25f}, GRAY);
+    // A tall room: the locked door is the only way out through the back wall.
+    const float roomHeight = 6.0f;
+    const float wallCenterY = roomHeight / 2.0f;
+    Wall leftWall({-5, wallCenterY, 0}, {0.25f, roomHeight, 10}, GRAY);
+    Wall rightWall({5, wallCenterY, 0}, {0.25f, roomHeight, 10}, GRAY);
+    Wall frontWall({0, wallCenterY, 5}, {10, roomHeight, 0.25f}, GRAY);
+    Wall backWallLeft({-2.75f, wallCenterY, -5}, {4.5f, roomHeight, 0.25f}, GRAY);
+    Wall backWallRight({2.75f, wallCenterY, -5}, {4.5f, roomHeight, 0.25f}, GRAY);
     std::vector<Wall*> walls = {
         &leftWall, &rightWall, &frontWall, &backWallLeft, &backWallRight
     };
 
-    Door testDoor({0, 1, -5}, {1, 2, 0.2f}, true, ITEM_KEY_RUSTY);
+    Door testDoor({0, wallCenterY, -5}, {1, roomHeight, 0.2f}, true, ITEM_KEY_RUSTY);
 
     std::vector<Pickup*> pickups;
  

@@ -42,12 +42,9 @@ BoundingBox Door::GetBoundingBox() {
 void Door::Draw() const {
     Color tint = hasTexture ? WHITE : (locked ? RED : (isOpen ? GREEN : BROWN));
 
-    Vector3 drawPos = position;
-    if (isOpen) {
-        // This is an immediate state change, not an animation: the door is
-        // fully beside the doorway on the very next frame.
-        drawPos.x += size.x + 0.5f;
-    }
-
-    DrawModel(model, drawPos, 1.0f, tint);
+    // Pressing E changes directly between these two full states. The open
+    // door stays visible; it simply turns sideways in the doorway.
+    float rotation = isOpen ? 90.0f : 0.0f;
+    DrawModelEx(model, position, { 0.0f, 1.0f, 0.0f }, rotation,
+                { 1.0f, 1.0f, 1.0f }, tint);
 }
