@@ -44,7 +44,9 @@ void Door::Draw() const {
 
     Vector3 drawPos = position;
     if (isOpen) {
-        drawPos.z += size.z + 0.5f; // slides forward when open
+        // This is an immediate state change, not an animation: the door is
+        // fully beside the doorway on the very next frame.
+        drawPos.x += size.x + 0.5f;
     }
 
     DrawModel(model, drawPos, 1.0f, tint);

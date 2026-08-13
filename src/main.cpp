@@ -6,6 +6,7 @@
 #include "Pickup.h"
 #include "Player.h"
 #include "Door.h"
+#include "Wall.h"
 #include <iostream>
 #include <vector>
 
@@ -24,7 +25,17 @@ int main(void)
 
     // Test pickups
     Item keyItem = { ITEM_KEY_RUSTY, "Rusty Key" };
-    Door testDoor({0, 1, -4}, {1, 2, 0.2f}, true, ITEM_KEY_RUSTY);
+    // A simple room: the door is the only opening in the back wall.
+    Wall leftWall({-5, 1, 0}, {0.25f, 2, 10}, GRAY);
+    Wall rightWall({5, 1, 0}, {0.25f, 2, 10}, GRAY);
+    Wall frontWall({0, 1, 5}, {10, 2, 0.25f}, GRAY);
+    Wall backWallLeft({-2.75f, 1, -5}, {4.5f, 2, 0.25f}, GRAY);
+    Wall backWallRight({2.75f, 1, -5}, {4.5f, 2, 0.25f}, GRAY);
+    std::vector<Wall*> walls = {
+        &leftWall, &rightWall, &frontWall, &backWallLeft, &backWallRight
+    };
+
+    Door testDoor({0, 1, -5}, {1, 2, 0.2f}, true, ITEM_KEY_RUSTY);
 
     std::vector<Pickup*> pickups;
  
@@ -44,7 +55,20 @@ int main(void)
         if (IsKeyPressed(KEY_F)) ToggleFullscreen();
 
         float dt = GetFrameTime();
-        player.Update(dt);
+        std::vector<BoundingBox> solidObstacles;
+        solidObstacles.reserve(walls.size() + 1);
+
+        for (const Wall* wall : walls) {
+            solidObstacles.push_back(wall->GetBoundingBox());
+        }
+
+        // A closed door is solid. Pressing E changes the state immediately,
+        // so it stops blocking movement on the next frame when open.
+        if (testDoor.IsBlocking()) {
+            solidObstacles.push_back(testDoor.GetBoundingBox());
+        }
+
+        player.Update(dt, solidObstacles);
 
         Ray ray = {
             player.camera.position,
@@ -92,6 +116,9 @@ int main(void)
 
                 DrawPlane({0, 0, 0}, {20, 20}, DARKGRAY);
 
+                for (const Wall* wall : walls) {
+                    wall->Draw();
+                }
 
                 for (auto* p : pickups) {
                     p->Draw();

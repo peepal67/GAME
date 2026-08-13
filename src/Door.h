@@ -9,6 +9,7 @@ public:
     void Interact(Player& player) override;
     BoundingBox GetBoundingBox() override;
     void Draw() const;
+    bool IsBlocking() const { return !isOpen; }
 
     Vector3 position;
     Vector3 size;
