@@ -19,5 +19,4 @@ public:
 private:
     Model model;
     int requiredKeyId;
-    bool hasTexture = false;
 };

@@ -10,7 +10,6 @@ Door::Door(Vector3 pos, Vector3 sz, bool lock, int keyId, Texture2D* texture)
 
     if (texture != nullptr) {
         model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = *texture;
-        hasTexture = true;
     }
 }
 
@@ -54,7 +53,8 @@ BoundingBox Door::GetBoundingBox() {
 }
 
 void Door::Draw() const {
-    Color tint = hasTexture ? WHITE : (locked ? RED : (isOpen ? GREEN : BROWN));
+    // Keep the wood grain visible while making the two door states obvious.
+    Color tint = isOpen ? GREEN : RED;
 
     // Pressing E changes directly between full states. When open, the door
     // pivots about its left edge and rests visibly inside the room.

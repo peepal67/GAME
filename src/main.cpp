@@ -26,6 +26,17 @@ int main(void)
     const float wallThickness = 0.25f;
     const float wallCenterY = roomHeight / 2.0f;
 
+    Texture2D rockWallTexture = LoadTexture("assets/textures/rock_wall_16_diff_1k.jpg");
+    Texture2D floorTexture = LoadTexture("assets/textures/black_painted_planks_diff_1k (1).jpg");
+    Texture2D doorTexture = LoadTexture("assets/textures/wood_planks_dirt_diff_1k.jpg");
+    SetTextureWrap(rockWallTexture, TEXTURE_WRAP_REPEAT);
+    SetTextureWrap(floorTexture, TEXTURE_WRAP_REPEAT);
+    SetTextureWrap(doorTexture, TEXTURE_WRAP_REPEAT);
+
+    Mesh floorMesh = GenMeshPlane(roomWidth, roomDepth, 1, 1);
+    Model floorModel = LoadModelFromMesh(floorMesh);
+    floorModel.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = floorTexture;
+
     // The camera starts at a normal eye height inside the room.
     Player player({0, 1.75f, 6});
 
@@ -42,22 +53,22 @@ int main(void)
     const float sideWallWidth = (roomWidth - doorWidth) / 2.0f;
     const float topWallHeight = roomHeight - doorHeight;
 
-    Wall leftWall({-halfRoomWidth, wallCenterY, 0}, {wallThickness, roomHeight, roomDepth}, DARKGRAY);
-    Wall rightWall({halfRoomWidth, wallCenterY, 0}, {wallThickness, roomHeight, roomDepth}, DARKGRAY);
-    Wall frontWall({0, wallCenterY, halfRoomDepth}, {roomWidth, roomHeight, wallThickness}, DARKGRAY);
+    Wall leftWall({-halfRoomWidth, wallCenterY, 0}, {wallThickness, roomHeight, roomDepth}, WHITE, &rockWallTexture);
+    Wall rightWall({halfRoomWidth, wallCenterY, 0}, {wallThickness, roomHeight, roomDepth}, WHITE, &rockWallTexture);
+    Wall frontWall({0, wallCenterY, halfRoomDepth}, {roomWidth, roomHeight, wallThickness}, WHITE, &rockWallTexture);
     Wall backWallLeft({-(doorWidth + sideWallWidth) / 2.0f, wallCenterY, -halfRoomDepth},
-                      {sideWallWidth, roomHeight, wallThickness}, DARKGRAY);
+                      {sideWallWidth, roomHeight, wallThickness}, WHITE, &rockWallTexture);
     Wall backWallRight({(doorWidth + sideWallWidth) / 2.0f, wallCenterY, -halfRoomDepth},
-                       {sideWallWidth, roomHeight, wallThickness}, DARKGRAY);
+                       {sideWallWidth, roomHeight, wallThickness}, WHITE, &rockWallTexture);
     Wall wallAboveDoor({0, doorHeight + topWallHeight / 2.0f, -halfRoomDepth},
-                       {doorWidth, topWallHeight, wallThickness}, DARKGRAY);
-    Wall roof({0, roomHeight, 0}, {roomWidth, wallThickness, roomDepth}, GRAY);
+                       {doorWidth, topWallHeight, wallThickness}, WHITE, &rockWallTexture);
+    Wall roof({0, roomHeight, 0}, {roomWidth, wallThickness, roomDepth}, WHITE, &rockWallTexture);
     std::vector<Wall*> walls = {
         &leftWall, &rightWall, &frontWall, &backWallLeft, &backWallRight,
         &wallAboveDoor, &roof
     };
 
-    Door testDoor({0, doorCenterY, -halfRoomDepth}, {doorWidth, doorHeight, 0.18f}, true, ITEM_KEY_RUSTY);
+    Door testDoor({0, doorCenterY, -halfRoomDepth}, {doorWidth, doorHeight, 0.18f}, true, ITEM_KEY_RUSTY, &doorTexture);
 
     std::vector<Pickup*> pickups;
  
@@ -136,7 +147,7 @@ int main(void)
 
             BeginMode3D(player.camera);
 
-                DrawPlane({0, 0, 0}, {roomWidth, roomDepth}, LIGHTGRAY);
+                DrawModel(floorModel, {0, 0, 0}, 1.0f, WHITE);
 
                 for (const Wall* wall : walls) {
                     wall->Draw();
