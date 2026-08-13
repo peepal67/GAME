@@ -1,17 +1,29 @@
-#pragma once
-#include "raylib.h"
+#include "Wall.h"
 
-class Wall {
-public:
-    Wall(Vector3 pos, Vector3 size, Color color, Texture2D* texture = nullptr);
-    ~Wall();
+Wall::Wall(Vector3 pos, Vector3 sz, Color col, Texture2D* texture)
+    : position(pos), size(sz)
+{
+    Mesh m = GenMeshCube(size.x, size.y, size.z);
+    model = LoadModelFromMesh(m);
 
-    void Draw() const;
-    BoundingBox GetBoundingBox() const;
+    if (texture != nullptr) {
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = *texture;
+    } else {
+        model.materials[0].maps[MATERIAL_MAP_DIFFUSE].color = col;
+    }
+}
 
-    Vector3 position;
-    Vector3 size;
+Wall::~Wall() {
+    UnloadModel(model);
+}
 
-private:
-    Model model;
-};
+void Wall::Draw() const {
+    DrawModel(model, position, 1.0f, WHITE);
+}
+
+BoundingBox Wall::GetBoundingBox() const {
+    return {
+        { position.x - size.x/2, position.y - size.y/2, position.z - size.z/2 },
+        { position.x + size.x/2, position.y + size.y/2, position.z + size.z/2 }
+    };
+}
