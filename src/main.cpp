@@ -28,7 +28,7 @@ int main(void)
 
     const float roomWidth = 16.0f;
     const float roomDepth = 18.0f;
-    const float roomHeight = 4.0f;
+    const float roomHeight = 6.0f;
     const float wallThickness = 0.25f;
     const float wallCenterY = roomHeight / 2.0f;
 
