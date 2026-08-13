@@ -20,28 +20,48 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "Void Protocol");
     DisableCursor();
 
-    Player player({0, 3, 3});
+    const float roomWidth = 16.0f;
+    const float roomDepth = 18.0f;
+    const float roomHeight = 4.0f;
+    const float wallThickness = 0.25f;
+    const float wallCenterY = roomHeight / 2.0f;
+
+    // The camera starts at a normal eye height inside the room.
+    Player player({0, 1.75f, 6});
 
 
     // Test pickups
     Item keyItem = { ITEM_KEY_RUSTY, "Rusty Key" };
-    // A tall room: the locked door is the only way out through the back wall.
-    const float roomHeight = 6.0f;
-    const float wallCenterY = roomHeight / 2.0f;
-    Wall leftWall({-5, wallCenterY, 0}, {0.25f, roomHeight, 10}, GRAY);
-    Wall rightWall({5, wallCenterY, 0}, {0.25f, roomHeight, 10}, GRAY);
-    Wall frontWall({0, wallCenterY, 5}, {10, roomHeight, 0.25f}, GRAY);
-    Wall backWallLeft({-2.75f, wallCenterY, -5}, {4.5f, roomHeight, 0.25f}, GRAY);
-    Wall backWallRight({2.75f, wallCenterY, -5}, {4.5f, roomHeight, 0.25f}, GRAY);
+    // A larger enclosed room. The doorway is built into the back wall, with
+    // wall sections to its left, right, and above it.
+    const float doorWidth = 2.0f;
+    const float doorHeight = 2.4f;
+    const float doorCenterY = doorHeight / 2.0f;
+    const float halfRoomWidth = roomWidth / 2.0f;
+    const float halfRoomDepth = roomDepth / 2.0f;
+    const float sideWallWidth = (roomWidth - doorWidth) / 2.0f;
+    const float topWallHeight = roomHeight - doorHeight;
+
+    Wall leftWall({-halfRoomWidth, wallCenterY, 0}, {wallThickness, roomHeight, roomDepth}, DARKGRAY);
+    Wall rightWall({halfRoomWidth, wallCenterY, 0}, {wallThickness, roomHeight, roomDepth}, DARKGRAY);
+    Wall frontWall({0, wallCenterY, halfRoomDepth}, {roomWidth, roomHeight, wallThickness}, DARKGRAY);
+    Wall backWallLeft({-(doorWidth + sideWallWidth) / 2.0f, wallCenterY, -halfRoomDepth},
+                      {sideWallWidth, roomHeight, wallThickness}, DARKGRAY);
+    Wall backWallRight({(doorWidth + sideWallWidth) / 2.0f, wallCenterY, -halfRoomDepth},
+                       {sideWallWidth, roomHeight, wallThickness}, DARKGRAY);
+    Wall wallAboveDoor({0, doorHeight + topWallHeight / 2.0f, -halfRoomDepth},
+                       {doorWidth, topWallHeight, wallThickness}, DARKGRAY);
+    Wall roof({0, roomHeight, 0}, {roomWidth, wallThickness, roomDepth}, GRAY);
     std::vector<Wall*> walls = {
-        &leftWall, &rightWall, &frontWall, &backWallLeft, &backWallRight
+        &leftWall, &rightWall, &frontWall, &backWallLeft, &backWallRight,
+        &wallAboveDoor, &roof
     };
 
-    Door testDoor({0, wallCenterY, -5}, {1, roomHeight, 0.2f}, true, ITEM_KEY_RUSTY);
+    Door testDoor({0, doorCenterY, -halfRoomDepth}, {doorWidth, doorHeight, 0.18f}, true, ITEM_KEY_RUSTY);
 
     std::vector<Pickup*> pickups;
  
-    pickups.push_back(new Pickup({2, 1, 0}, keyItem, "assets/models/Worn_Key2.obj"));
+    pickups.push_back(new Pickup({2, 0.25f, 0}, keyItem, "assets/models/Worn_Key2.obj"));
 
     float maxInteractDistance = 3.0f;
 
@@ -116,7 +136,7 @@ int main(void)
 
             BeginMode3D(player.camera);
 
-                DrawPlane({0, 0, 0}, {20, 20}, DARKGRAY);
+                DrawPlane({0, 0, 0}, {roomWidth, roomDepth}, LIGHTGRAY);
 
                 for (const Wall* wall : walls) {
                     wall->Draw();

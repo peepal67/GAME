@@ -14,10 +14,12 @@ bool Player::WouldCollide(Vector3 candidatePosition,
     for (const BoundingBox& obstacle : solidObstacles) {
         bool overlapsX = candidatePosition.x + collisionRadius > obstacle.min.x &&
                          candidatePosition.x - collisionRadius < obstacle.max.x;
+        bool overlapsY = candidatePosition.y > obstacle.min.y &&
+                         candidatePosition.y - collisionHeight < obstacle.max.y;
         bool overlapsZ = candidatePosition.z + collisionRadius > obstacle.min.z &&
                          candidatePosition.z - collisionRadius < obstacle.max.z;
 
-        if (overlapsX && overlapsZ) return true;
+        if (overlapsX && overlapsY && overlapsZ) return true;
     }
 
     return false;

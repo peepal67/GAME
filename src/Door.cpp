@@ -33,18 +33,43 @@ void Door::Interact(Player& player) {
 }
 
 BoundingBox Door::GetBoundingBox() {
+    Vector3 boxCenter = position;
+    Vector3 boxSize = size;
+
+    if (isOpen) {
+        // The open door has turned around its left hinge, so its width now
+        // runs along the Z axis beside the doorway.
+        boxCenter = {
+            position.x - size.x / 2.0f,
+            position.y,
+            position.z + size.x / 2.0f
+        };
+        boxSize = { size.z, size.y, size.x };
+    }
+
     return {
-        { position.x - size.x/2, position.y - size.y/2, position.z - size.z/2 },
-        { position.x + size.x/2, position.y + size.y/2, position.z + size.z/2 }
+        { boxCenter.x - boxSize.x/2, boxCenter.y - boxSize.y/2, boxCenter.z - boxSize.z/2 },
+        { boxCenter.x + boxSize.x/2, boxCenter.y + boxSize.y/2, boxCenter.z + boxSize.z/2 }
     };
 }
 
 void Door::Draw() const {
     Color tint = hasTexture ? WHITE : (locked ? RED : (isOpen ? GREEN : BROWN));
 
-    // Pressing E changes directly between these two full states. The open
-    // door stays visible; it simply turns sideways in the doorway.
-    float rotation = isOpen ? 90.0f : 0.0f;
-    DrawModelEx(model, position, { 0.0f, 1.0f, 0.0f }, rotation,
+    // Pressing E changes directly between full states. When open, the door
+    // pivots about its left edge and rests visibly inside the room.
+    Vector3 drawPosition = position;
+    float rotation = 0.0f;
+
+    if (isOpen) {
+        drawPosition = {
+            position.x - size.x / 2.0f,
+            position.y,
+            position.z + size.x / 2.0f
+        };
+        rotation = -90.0f;
+    }
+
+    DrawModelEx(model, drawPosition, { 0.0f, 1.0f, 0.0f }, rotation,
                 { 1.0f, 1.0f, 1.0f }, tint);
 }

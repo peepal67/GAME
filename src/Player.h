@@ -20,6 +20,7 @@ private:
 
     Inventory inventory;
     float collisionRadius = 0.30f;
+    float collisionHeight = 1.75f;
 };
 
 
