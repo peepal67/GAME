@@ -11,9 +11,9 @@
 #include <vector>
 
 namespace {
-constexpr const char* rockWallTexturePath = "assets/textures/rock_wall_16_diff_1k.jpg";
-constexpr const char* floorTexturePath = "assets/textures/black_painted_planks_diff_1k (1).jpg";
-constexpr const char* doorTexturePath = "assets/textures/wood_planks_dirt_diff_1k.jpg";
+constexpr const char* rockWallTexturePath = "assets/textures/rock_wall_16_diff_1k.png";
+constexpr const char* floorTexturePath = "assets/textures/black_painted_planks_diff_1k.png";
+constexpr const char* doorTexturePath = "assets/textures/wood_planks_dirt_diff_1k.png";
 }
 
 int main(void)
