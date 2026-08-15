@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cmath>
 
 namespace {
 const char* kWallTexturePath     = "assets/textures/dark_rock_diff_1k.png";
@@ -20,6 +21,18 @@ const char* kZombieModelPath     = "assets/models/zombie.obj";
 const char* kFootstepsPath       = "assets/sounds/footsteps_trimmed.wav";
 const char* kBackgroundMusicPath = "assets/music/background.mp3";
 }
+
+struct ZombieHazard {
+    Vector3 position;
+    float scale;
+};
+
+struct QuizGate {
+    Wall* correctSide;
+    Wall* wrongSide;
+    const char* question;
+    float triggerZ;
+};
 
 int main(void)
 {
@@ -70,7 +83,7 @@ int main(void)
     decorPatches.push_back(new Wall({0.0f, 6.4f, 0.0f},   {0.6f, 0.02f, 0.6f}, ORANGE));
     for (auto* w : decorPatches) w->isPassable = true;
 
-    // ===================== HALLWAY (manual - needs a gap for Room C) =====================
+    // ===================== HALLWAY =====================
     const float hallNearZ = -13.0f, hallFarZ = -39.0f;
     const float hallHalfWidth = 8.0f;
     const float hallHeight = 6.5f;
@@ -98,20 +111,17 @@ int main(void)
     hallwayWalls.push_back(hallFloor);
     hallwayWalls.push_back(hallRoof);
 
-    Lever lever1({5.0f, 1.2f, -17.0f}, GameColor::GC_RED, GameColor::GC_BLUE);
-    Lever lever2({5.0f, 1.2f, -21.0f}, GameColor::GC_ORANGE, GameColor::GC_BLUE);
-    Lever lever3({5.0f, 1.2f, -25.0f}, GameColor::GC_RED, GameColor::GC_ORANGE);
+    const Vector3 lever1StartPos = {5.0f, 1.2f, -17.0f};
+    const Vector3 lever2StartPos = {5.0f, 1.2f, -21.0f};
+    const Vector3 lever3StartPos = {5.0f, 1.2f, -25.0f};
+    Lever lever1(lever1StartPos, GameColor::GC_RED, GameColor::GC_BLUE);
+    Lever lever2(lever2StartPos, GameColor::GC_ORANGE, GameColor::GC_BLUE);
+    Lever lever3(lever3StartPos, GameColor::GC_RED, GameColor::GC_ORANGE);
     std::vector<Lever*> levers = { &lever1, &lever2, &lever3 };
 
-    // Door to Room C - manually placed in the hallway's left-wall gap.
-    // NOTE: Door's slide-open animation shifts along Z, built for Z-facing
-    // walls. This door's opening faces X, so it'll still unlock/block
-    // correctly but the open-slide visual will look off until Door is
-    // extended with an axis option - functional, not yet polished.
     Door doorToC({-hallHalfWidth, 3.0f, roomCGapZ}, {0.18f, 6.0f, roomCGapHalf * 2}, true, -1, &doorTexture);
     bool exitCodeKnown = false;
 
-    // Room C - small 5x5 alcove, built manually (opens onto the hallway gap)
     std::vector<Wall*> roomCWalls;
     const float rcCenterX = -hallHalfWidth - 2.5f, rcCenterZ = roomCGapZ;
     roomCWalls.push_back(new Wall({rcCenterX - 2.5f, hallWallY, rcCenterZ}, {0.25f, hallHeight, 5.0f}, WHITE, &wallTexture));
@@ -124,26 +134,30 @@ int main(void)
     roomCWalls.push_back(rcFloor);
     roomCWalls.push_back(rcRoof);
 
-    // ===================== ROOM B (entrance on near side, open far side into D) =====================
+    // ===================== ROOM B (quiz gates) =====================
     Room roomB;
     roomB.BuildRoomWithDoor({0, 0, -52}, 26.0f, 26.0f, 6.5f, 4.0f, 6.0f,
                              true, -1, &wallTexture, &doorTexture, &floorTexture, &ceilingTexture,
                              nullptr, true, false);
 
-    Wall* q1Left  = new Wall({-3.5f, 1, -45}, {2.5f, 2, 0.2f}, GREEN); q1Left->isPassable = true;
-    Wall* q1Right = new Wall({ 3.5f, 1, -45}, {2.5f, 2, 0.2f}, RED);
-    Wall* q2Left  = new Wall({-3.5f, 1, -52}, {2.5f, 2, 0.2f}, RED);
-    Wall* q2Right = new Wall({ 3.5f, 1, -52}, {2.5f, 2, 0.2f}, GREEN); q2Right->isPassable = true;
-    Wall* q3Left  = new Wall({-3.5f, 1, -59}, {2.5f, 2, 0.2f}, RED);
-    Wall* q3Right = new Wall({ 3.5f, 1, -59}, {2.5f, 2, 0.2f}, GREEN); q3Right->isPassable = true;
-    std::vector<Wall*> quizGates = { q1Left, q1Right, q2Left, q2Right, q3Left, q3Right };
+    Wall* q1Correct = new Wall({-6.5f, 3.25f, -45}, {13.0f, 6.5f, 0.2f}, BLUE);   q1Correct->isPassable = true;
+    Wall* q1Wrong   = new Wall({ 6.5f, 3.25f, -45}, {13.0f, 6.5f, 0.2f}, YELLOW);
 
-    std::vector<Wall*> signs;
-    signs.push_back(new Wall({0, 3, -45}, {2.0f, 1.0f, 0.1f}, WHITE));
-    signs.push_back(new Wall({0, 3, -52}, {2.0f, 1.0f, 0.1f}, WHITE));
-    signs.push_back(new Wall({0, 3, -59}, {2.0f, 1.0f, 0.1f}, WHITE));
+    Wall* q2Correct = new Wall({ 6.5f, 3.25f, -52}, {13.0f, 6.5f, 0.2f}, YELLOW);   q2Correct->isPassable = true;
+    Wall* q2Wrong   = new Wall({-6.5f, 3.25f, -52}, {13.0f, 6.5f, 0.2f}, BLUE);
 
-    // ===================== ROOM D (entrance shared with B, dead-end far wall) =====================
+    Wall* q3Correct = new Wall({ 6.5f, 3.25f, -59}, {13.0f, 6.5f, 0.2f}, YELLOW);   q3Correct->isPassable = true;
+    Wall* q3Wrong   = new Wall({-6.5f, 3.25f, -59}, {13.0f, 6.5f, 0.2f}, BLUE);
+
+    std::vector<Wall*> quizGates = { q1Correct, q1Wrong, q2Correct, q2Wrong, q3Correct, q3Wrong };
+
+    std::vector<QuizGate> quizQuestions = {
+        { q1Correct, q1Wrong, "Q1: Which keyword declares a constant in C++?\nLEFT (blue): const   |   RIGHT (yellow): static", -45 },
+        { q2Correct, q2Wrong, "Q2: Which operator accesses a member via pointer?\nLEFT (yellow): .   |   RIGHT (blue): ->", -52 },
+        { q3Correct, q3Wrong, "Q3: Which loop always runs at least once?\nLEFT (yellow): for   |   RIGHT (blue): do-while", -59 },
+    };
+
+    // ===================== ROOM D =====================
     Room roomD;
     roomD.BuildRoomWithDoor({0, 0, -78}, 26.0f, 26.0f, 6.5f, 4.0f, 6.0f,
                              false, -1, &wallTexture, &doorTexture, &floorTexture, &ceilingTexture,
@@ -155,18 +169,65 @@ int main(void)
     notes.push_back(new Note({-4, 1.2f, -86}, "Final digit matches the room number carved above the door: 7."));
     notes.push_back(new Note({4, 1.2f, -86},  "Together: 1 9 6 7."));
 
-    Keypad keypad({0, 1.5f, -78}, 1, 9, 6, 7);
+    const Vector3 keypadStartPos = {0, 1.5f, -78};
+    Keypad keypad(keypadStartPos, 1, 9, 6, 7);
 
-    Player player({0, 1.75f, 6});
+    // ===================== Zombie hazards =====================
+    std::vector<ZombieHazard> zombies = {
+        {{-4.0f, 0, -15.0f}, 3.0f},
+        {{ 3.5f, 0, -17.5f}, 5.0f},
+        {{-2.0f, 0, -20.0f}, 2.5f},
+        {{ 6.0f, 0, -22.0f}, 6.0f},
+        {{-6.0f, 0, -24.0f}, 4.0f},
+        {{ 2.0f, 0, -26.5f}, 3.5f},
+        {{-3.5f, 0, -28.0f}, 5.5f},
+        {{ 5.0f, 0, -30.0f}, 2.0f},
+        {{-5.5f, 0, -35.0f}, 4.5f},
+        {{ 1.5f, 0, -37.0f}, 6.5f},
+    };
+    const float zombieDeathRadius = 1.2f;
+
+    // ===================== Player + state =====================
+    const Vector3 spawnPoint = {0, 1.75f, 6};
+    Player player(spawnPoint);
     float maxInteractDistance = 3.0f;
     std::string displayedNoteText;
 
-    // Collect all doors once - Room's own GetDoors() vectors don't get resized after building
+    bool isDead = false;
+    float deathTimer = 0.0f;
+
     std::vector<Door*> allDoors;
     for (auto* d : roomA.GetDoors()) allDoors.push_back(d);
     for (auto* d : roomB.GetDoors()) allDoors.push_back(d);
     for (auto* d : roomD.GetDoors()) allDoors.push_back(d);
     allDoors.push_back(&doorToC);
+
+    auto ResetLevel = [&]() {
+        player.camera.position = spawnPoint;
+        player.camera.target = { spawnPoint.x, spawnPoint.y, spawnPoint.z - 1 };
+
+        roomA.GetDoors()[0]->locked = true;
+        roomA.GetDoors()[0]->isOpen = false;
+        if (!roomB.GetDoors().empty()) {
+            roomB.GetDoors()[0]->locked = true;
+            roomB.GetDoors()[0]->isOpen = false;
+        }
+        doorToC.locked = true;
+        doorToC.isOpen = false;
+
+        lever1 = Lever(lever1StartPos, GameColor::GC_RED, GameColor::GC_BLUE);
+        lever2 = Lever(lever2StartPos, GameColor::GC_ORANGE, GameColor::GC_BLUE);
+        lever3 = Lever(lever3StartPos, GameColor::GC_RED, GameColor::GC_ORANGE);
+
+        keypad = Keypad(keypadStartPos, 1, 9, 6, 7);
+
+        exitCodeKnown = false;
+        displayedNoteText.clear();
+
+        if (!roomA.GetPickups().empty() && roomA.GetPickups()[0]->collected) {
+            roomA.GetPickups()[0]->collected = false;
+        }
+    };
 
     SetTargetFPS(60);
 
@@ -174,7 +235,7 @@ int main(void)
     {
         UpdateMusicStream(backgroundMusic);
 
-        if (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D)) {
+        if (!isDead && (IsKeyDown(KEY_W) || IsKeyDown(KEY_A) || IsKeyDown(KEY_S) || IsKeyDown(KEY_D))) {
             if (!IsSoundPlaying(footstepsSound)) { PlaySound(footstepsSound); }
         }
         if (IsKeyPressed(KEY_F)) ToggleFullscreen();
@@ -201,7 +262,46 @@ int main(void)
         if (doorToC.IsBlocking()) allObstacles.push_back(doorToC.GetBoundingBox());
         for (auto* g : quizGates) if (!g->isPassable) allObstacles.push_back(g->GetBoundingBox());
 
-        player.Update(dt, allObstacles);
+        if (!isDead) {
+            player.Update(dt, allObstacles);
+        }
+
+        if (!isDead) {
+            for (const auto& z : zombies) {
+                float dx = player.camera.position.x - z.position.x;
+                float dz = player.camera.position.z - z.position.z;
+                float distSq = dx*dx + dz*dz;
+                float radius = zombieDeathRadius + (z.scale * 0.15f);
+                if (distSq < radius * radius) {
+                    isDead = true;
+                    deathTimer = 2.0f;
+                    break;
+                }
+            }
+        }
+
+        if (!isDead) {
+            for (auto* g : quizGates) {
+                if (g->isPassable) continue;
+                BoundingBox box = g->GetBoundingBox();
+                Vector3 pos = player.camera.position;
+                bool inside = pos.x > box.min.x - 0.3f && pos.x < box.max.x + 0.3f &&
+                              pos.z > box.min.z - 0.3f && pos.z < box.max.z + 0.3f;
+                if (inside) {
+                    isDead = true;
+                    deathTimer = 2.0f;
+                    break;
+                }
+            }
+        }
+
+        if (isDead) {
+            deathTimer -= dt;
+            if (deathTimer <= 0.0f) {
+                ResetLevel();
+                isDead = false;
+            }
+        }
 
         Ray ray = {
             player.camera.position,
@@ -215,61 +315,63 @@ int main(void)
         Note* focusedNote = nullptr;
         float closestDist = maxInteractDistance;
 
-        for (auto* p : roomA.GetPickups()) {
-            if (p->collected) continue;
-            RayCollision hit = GetRayCollisionBox(ray, p->GetBoundingBox());
-            if (hit.hit && hit.distance < closestDist) {
-                closestDist = hit.distance; focusedPickup = p;
-                focusedDoor = nullptr; focusedLever = nullptr; focusedKeypad = nullptr; focusedNote = nullptr;
+        if (!isDead) {
+            for (auto* p : roomA.GetPickups()) {
+                if (p->collected) continue;
+                RayCollision hit = GetRayCollisionBox(ray, p->GetBoundingBox());
+                if (hit.hit && hit.distance < closestDist) {
+                    closestDist = hit.distance; focusedPickup = p;
+                    focusedDoor = nullptr; focusedLever = nullptr; focusedKeypad = nullptr; focusedNote = nullptr;
+                }
             }
-        }
 
-        for (auto* d : allDoors) {
-            RayCollision hit = GetRayCollisionBox(ray, d->GetBoundingBox());
-            if (hit.hit && hit.distance < closestDist) {
-                closestDist = hit.distance; focusedDoor = d;
-                focusedPickup = nullptr; focusedLever = nullptr; focusedKeypad = nullptr; focusedNote = nullptr;
+            for (auto* d : allDoors) {
+                RayCollision hit = GetRayCollisionBox(ray, d->GetBoundingBox());
+                if (hit.hit && hit.distance < closestDist) {
+                    closestDist = hit.distance; focusedDoor = d;
+                    focusedPickup = nullptr; focusedLever = nullptr; focusedKeypad = nullptr; focusedNote = nullptr;
+                }
             }
-        }
 
-        for (auto* l : levers) {
-            RayCollision hit = GetRayCollisionBox(ray, l->GetBoundingBox());
-            if (hit.hit && hit.distance < closestDist) {
-                closestDist = hit.distance; focusedLever = l;
-                focusedPickup = nullptr; focusedDoor = nullptr; focusedKeypad = nullptr; focusedNote = nullptr;
+            for (auto* l : levers) {
+                RayCollision hit = GetRayCollisionBox(ray, l->GetBoundingBox());
+                if (hit.hit && hit.distance < closestDist) {
+                    closestDist = hit.distance; focusedLever = l;
+                    focusedPickup = nullptr; focusedDoor = nullptr; focusedKeypad = nullptr; focusedNote = nullptr;
+                }
             }
-        }
 
-        for (auto* n : notes) {
-            RayCollision hit = GetRayCollisionBox(ray, n->GetBoundingBox());
-            if (hit.hit && hit.distance < closestDist) {
-                closestDist = hit.distance; focusedNote = n;
-                focusedPickup = nullptr; focusedDoor = nullptr; focusedLever = nullptr; focusedKeypad = nullptr;
+            for (auto* n : notes) {
+                RayCollision hit = GetRayCollisionBox(ray, n->GetBoundingBox());
+                if (hit.hit && hit.distance < closestDist) {
+                    closestDist = hit.distance; focusedNote = n;
+                    focusedPickup = nullptr; focusedDoor = nullptr; focusedLever = nullptr; focusedKeypad = nullptr;
+                }
             }
-        }
 
-        RayCollision hitKeypad = GetRayCollisionBox(ray, keypad.GetBoundingBox());
-        if (hitKeypad.hit && hitKeypad.distance < closestDist) {
-            closestDist = hitKeypad.distance; focusedKeypad = &keypad;
-            focusedPickup = nullptr; focusedDoor = nullptr; focusedLever = nullptr; focusedNote = nullptr;
-        }
-
-        if (IsKeyPressed(KEY_E)) {
-            if (focusedPickup) {
-                focusedPickup->Interact(player);
-                std::cout << "Picked up: " << focusedPickup->item.name << "\n";
-            } else if (focusedDoor) {
-                focusedDoor->Interact(player);
-            } else if (focusedLever) {
-                focusedLever->Interact(player);
-            } else if (focusedKeypad) {
-                focusedKeypad->Interact(player);
-            } else if (focusedNote) {
-                displayedNoteText = focusedNote->GetText();
+            RayCollision hitKeypad = GetRayCollisionBox(ray, keypad.GetBoundingBox());
+            if (hitKeypad.hit && hitKeypad.distance < closestDist) {
+                closestDist = hitKeypad.distance; focusedKeypad = &keypad;
+                focusedPickup = nullptr; focusedDoor = nullptr; focusedLever = nullptr; focusedNote = nullptr;
             }
-        }
-        if (focusedKeypad && IsKeyPressed(KEY_ENTER)) {
-            focusedKeypad->ConfirmDigit();
+
+            if (IsKeyPressed(KEY_E)) {
+                if (focusedPickup) {
+                    focusedPickup->Interact(player);
+                    std::cout << "Picked up: " << focusedPickup->item.name << "\n";
+                } else if (focusedDoor) {
+                    focusedDoor->Interact(player);
+                } else if (focusedLever) {
+                    focusedLever->Interact(player);
+                } else if (focusedKeypad) {
+                    focusedKeypad->Interact(player);
+                } else if (focusedNote) {
+                    displayedNoteText = focusedNote->GetText();
+                }
+            }
+            if (focusedKeypad && IsKeyPressed(KEY_ENTER)) {
+                focusedKeypad->ConfirmDigit();
+            }
         }
 
         BeginDrawing();
@@ -278,41 +380,61 @@ int main(void)
             BeginMode3D(player.camera);
                 roomA.DrawRoomWithDoor();
                 for (auto* w : decorPatches) w->Draw();
-                DrawModel(zombieModel, {0, 0.0f, -16.0f}, 4.0f, WHITE);
 
                 for (auto* w : hallwayWalls) w->Draw();
                 doorToC.Draw();
                 for (auto* l : levers) l->Draw();
                 for (auto* w : roomCWalls) w->Draw();
 
+                for (const auto& z : zombies) {
+                    DrawModel(zombieModel, z.position, z.scale, WHITE);
+                }
+
                 roomB.DrawRoomWithDoor();
                 for (auto* g : quizGates) g->Draw();
-                for (auto* s : signs) s->Draw();
 
                 roomD.DrawRoomWithDoor();
                 for (auto* n : notes) n->Draw();
                 keypad.Draw();
             EndMode3D();
 
-            if (focusedPickup || focusedDoor || focusedLever || focusedKeypad || focusedNote) {
-                if (focusedDoor && focusedDoor->locked) {
-                    DrawText("Door is locked", 20, 20, 20, WHITE);
-                } else {
-                    DrawText("Press E", 20, 20, 20, WHITE);
+            if (!isDead) {
+                if (focusedPickup || focusedDoor || focusedLever || focusedKeypad || focusedNote) {
+                    if (focusedDoor && focusedDoor->locked) {
+                        DrawText("Door is locked", 20, 40, 20, WHITE);
+                    } else {
+                        DrawText("Press E", 20, 40, 20, WHITE);
+                    }
                 }
-            }
-            if (focusedKeypad) {
-                DrawText(TextFormat("Code: %d %d %d %d  (ENTER to confirm digit)",
-                          keypad.GetDigit(0), keypad.GetDigit(1), keypad.GetDigit(2), keypad.GetDigit(3)),
-                          20, 50, 20, YELLOW);
-            }
-            if (!displayedNoteText.empty()) {
-                DrawText(displayedNoteText.c_str(), 20, screenHeight - 40, 18, WHITE);
+                if (focusedKeypad) {
+                    DrawText(TextFormat("Code: %d %d %d %d  (ENTER to confirm digit)",
+                              keypad.GetDigit(0), keypad.GetDigit(1), keypad.GetDigit(2), keypad.GetDigit(3)),
+                              20, 70, 20, YELLOW);
+                }
+                if (!displayedNoteText.empty()) {
+                    DrawText(displayedNoteText.c_str(), 20, screenHeight - 110, 18, WHITE);
+                }
+
+                for (const auto& q : quizQuestions) {
+                    if (fabsf(player.camera.position.z - q.triggerZ) < 4.0f &&
+                        player.camera.position.z < -39 && player.camera.position.z > -66) {
+                        DrawRectangle(0, screenHeight - 60, screenWidth, 60, Color{0,0,0,180});
+                        DrawText(q.question, 20, screenHeight - 55, 16, WHITE);
+                        break;
+                    }
+                }
+
+                DrawText(TextFormat("X: %.2f  Y: %.2f  Z: %.2f",
+                          player.camera.position.x, player.camera.position.y, player.camera.position.z),
+                          20, 10, 18, YELLOW);
+            } else {
+                DrawRectangle(0, 0, screenWidth, screenHeight, Color{0, 0, 0, 200});
+                const char* msg = "YOU HAVE DIED";
+                int fontSize = 40;
+                int textWidth = MeasureText(msg, fontSize);
+                DrawText(msg, screenWidth/2 - textWidth/2, screenHeight/2 - fontSize/2, fontSize, RED);
             }
 
-            DrawText(TextFormat("X: %.2f  Y: %.2f  Z: %.2f",
-                      player.camera.position.x, player.camera.position.y, player.camera.position.z),
-                      20, screenHeight - 70, 18, YELLOW);
             DrawText(TextFormat("FPS: %d", GetFPS()), screenWidth - 100, 10, 20, WHITE);
         EndDrawing();
     }
@@ -321,7 +443,6 @@ int main(void)
     for (auto* w : hallwayWalls) delete w;
     for (auto* w : roomCWalls) delete w;
     for (auto* g : quizGates) delete g;
-    for (auto* s : signs) delete s;
     for (auto* n : notes) delete n;
 
     UnloadTexture(wallTexture);
