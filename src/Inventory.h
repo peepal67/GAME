@@ -3,12 +3,11 @@
 #include <vector>
 
 class Inventory {
-    private:
-    std::vector<Item> items;
 public:
-    void AddItem( Item& item);
-    bool HasItem(int id) ;
-    void GetItems();
+    void AddItem(const Item& item);
+    bool HasItem(int id) const;
+    const std::vector<Item>& GetItems() const { return items; }
 
-
+private:
+    std::vector<Item> items;
 };

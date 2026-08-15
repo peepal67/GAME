@@ -3,7 +3,7 @@
 
 class Door : public Interactable {
 public:
-    Door(Vector3 pos, Vector3 size, bool locked, int requiredKeyId = -1, Texture2D* texture = nullptr);
+    Door(Vector3 pos, Vector3 size, bool locked, int requiredKeyId = -1, Texture2D* texture = nullptr, const char* openSoundPath= nullptr);
     ~Door();
 
     void Interact(Player& player) override;
@@ -19,4 +19,7 @@ public:
 private:
     Model model;
     int requiredKeyId;
+
+    Sound openSound;
+    bool hasOpenSound = false;
 };

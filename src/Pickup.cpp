@@ -1,13 +1,10 @@
 #include "Pickup.h"
 #include "Player.h"
 
-Pickup::Pickup(Vector3 pos, Item it, const char* modelPath)
-    : position(pos), item(it)
+Pickup::Pickup(Vector3 pos, Item it, const char* modelPath, float sc)
+    : position(pos), item(it), scale(sc)
 {
     model = LoadModel(modelPath);
-
-    
-
 }
 
 Pickup::~Pickup() {
@@ -28,6 +25,6 @@ BoundingBox Pickup::GetBoundingBox() {
 
 void Pickup::Draw() const {
     if (!collected) {
-        DrawModel(model, position, 10.0f, WHITE);
+        DrawModel(model, position, scale, WHITE);
     }
 }
