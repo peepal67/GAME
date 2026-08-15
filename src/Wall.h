@@ -11,6 +11,8 @@ public:
 
     Vector3 position;
     Vector3 size;
+    bool isFloorOrCeiling = false; // excluded from horizontal movement collision
+    bool isPassable = false;
 
 private:
     Model model;
