@@ -1,9 +1,11 @@
+// Keypad.h
 #pragma once
 #include "Interactable.h"
 
 class Keypad : public Interactable {
 public:
-    Keypad(Vector3 pos, int d0, int d1, int d2, int d3);
+    Keypad(Vector3 pos, int d0, int d1, int d2, int d3,
+           const char* modelPath = "assets/models/keypad.obj", float scale = 0.3f);
     ~Keypad();
 
     void Interact(Player& player) override;   // E: increments current digit
@@ -21,4 +23,7 @@ private:
     int target[4];
     int currentSlot = 0;
     bool solved = false;
+
+    Model model;
+    float scale;
 };

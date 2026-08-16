@@ -37,7 +37,7 @@ void Room::BuildRoomWithDoor(Vector3 center, float width, float depth, float hei
 
     if (topWallHeight > 0.01f) {
         walls.push_back(new Wall({center.x, doorHeight + topWallHeight / 2.0f, doorWallZ},
-                                  {doorWidth, topWallHeight, wallThickness}, Color{61, 43, 31, 255}, nullptr));
+                                  {doorWidth, topWallHeight, wallThickness}, WHITE, wallTexture));
     }
 
     doors.push_back(new Door({center.x, doorCenterY, doorWallZ},

@@ -16,5 +16,5 @@ BoundingBox Note::GetBoundingBox() {
 }
 
 void Note::Draw() const {
-    DrawCube(position, 0.5f, 0.35f, 0.05f, BEIGE); // paper-like slab, swap for texture later
+    DrawCube(position, 0.75f,0.01f , 0.55f, BEIGE); // paper-like slab, swap for texture later
 }

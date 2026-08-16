@@ -3,7 +3,7 @@
 
 Player::Player(Vector3 startPos) {
     camera.position = startPos;
-    camera.target = { startPos.x, startPos.y, startPos.z - 1 };
+    camera.target = { startPos.x+1, startPos.y, startPos.z +12 };
     camera.up = { 0.0f, 1.0f, 0.0f };
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
