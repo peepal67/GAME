@@ -1,15 +1,12 @@
-// Keypad.h
 #pragma once
 #include "Interactable.h"
 
 class Keypad : public Interactable {
 public:
-    Keypad(Vector3 pos, int d0, int d1, int d2, int d3,
-           const char* modelPath = "assets/models/keypad.obj", float scale = 0.3f);
-    ~Keypad();
+    Keypad(Vector3 pos, int d0, int d1, int d2, int d3, Model* model, float scale = 0.3f);
 
-    void Interact(Player& player) override;   // E: increments current digit
-    void ConfirmDigit();                       // moves to next slot, checks code on 4th
+    void Interact(Player& player) override;
+    void ConfirmDigit();
     BoundingBox GetBoundingBox() override;
     void Draw() const;
 
@@ -24,6 +21,6 @@ private:
     int currentSlot = 0;
     bool solved = false;
 
-    Model model;
+    Model* model;   // pointer to a model owned/loaded in main.cpp
     float scale;
 };

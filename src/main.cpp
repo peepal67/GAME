@@ -26,6 +26,7 @@ const char* ktableModelPath  = "assets/models/Table.obj";
 const char* kchandelierModelPath = "assets/models/Chandelier.obj";
 const char* kcandleModelPath = "assets/models/candle1.obj";
 const char* kmirrorModelPath = "assets/models/Mirror.obj";
+const char* kkeypadModelPath = "assets/models/keypad.obj";
 
 
 }
@@ -72,6 +73,8 @@ int main(void)
     Model chandelierModel = LoadModel(kchandelierModelPath);
     Model candleModel = LoadModel(kcandleModelPath);
     Model mirrorModel = LoadModel(kmirrorModelPath);
+    Model keypadModel = LoadModel(kkeypadModelPath);
+    
 
     if (wallTexture.id == 0 || doorTexture.id == 0 || floorTexture.id == 0 || ceilingTexture.id == 0 || portalTexture.id == 0) {
         CloseWindow();
@@ -132,9 +135,11 @@ int main(void)
     roomA.AddPickup(new Pickup({7, 0.25f, 12.5f}, keyItem, kKeyModelPath, 3.0f));
 
     std::vector<Wall*> decorPatches;
-    decorPatches.push_back(new Wall({5.0f, 3.0f, -12.9f}, {0.6f, 0.6f, 0.02f}, RED));
-    decorPatches.push_back(new Wall({-3.0f, 4.0f, -12.9f}, {0.6f, 0.6f, 0.02f}, BLUE));
-    decorPatches.push_back(new Wall({0.0f, 6.4f, 0.0f},   {0.6f, 0.02f, 0.6f}, ORANGE));
+    //on front wall
+    decorPatches.push_back(new Wall({-10.0f, 3.0f, -12.0f}, {0.6f, 0.6f, 0.02f}, RED));
+    decorPatches.push_back(new Wall({-8.0f, 3.0f, -12.0f}, {0.6f, 0.6f, 0.02f}, BLUE));
+    decorPatches.push_back(new Wall({-6.0f, 3.0f, -12.0f},   {0.6f, 0.6f, 0.02f}, ORANGE));
+
     for (auto* w : decorPatches) w->isPassable = true;
 
     // ===================== HALLWAY =====================
@@ -226,7 +231,7 @@ int main(void)
     notes.push_back(new Note({-4, 0.2f, -86}, "Final digit :- suiiiiii"));
 
     const Vector3 keypadStartPos = {0, 2.0f, -78};
-    Keypad keypad(keypadStartPos, 1, 9, 6, 7);
+    Keypad keypad(keypadStartPos, 1, 9, 6, 7, &keypadModel);
 
     // ===================== Zombie hazards =====================
     std::vector<ZombieHazard> zombies = {
@@ -260,6 +265,8 @@ int main(void)
 
     auto ResetLevel = [&]() {
         player.camera.position = spawnPoint;
+        player.camera.target = { spawnPoint.x + 1, spawnPoint.y, spawnPoint.z + 12 };
+        player.GetInventory().Clear(); 
 
         roomA.GetDoors()[0]->locked = true;
         roomA.GetDoors()[0]->isOpen = false;
@@ -267,6 +274,10 @@ int main(void)
             roomB.GetDoors()[0]->locked = true;
             roomB.GetDoors()[0]->isOpen = false;
         }
+        if (!roomD.GetDoors().empty()) {
+        roomD.GetDoors()[0]->isOpen = false;  
+        }
+
         doorToC.locked = true;
         doorToC.isOpen = false;
 
@@ -274,7 +285,7 @@ int main(void)
         lever2 = Lever(lever2StartPos, GameColor::GC_ORANGE, GameColor::GC_BLUE);
         lever3 = Lever(lever3StartPos, GameColor::GC_RED, GameColor::GC_ORANGE);
 
-        keypad = Keypad(keypadStartPos, 1, 9, 6, 7);
+        keypad = Keypad(keypadStartPos, 1, 9, 6, 7, &keypadModel);
 
         exitCodeKnown = false;
         displayedNoteText.clear();
@@ -554,6 +565,7 @@ int main(void)
     UnloadModel(chandelierModel);
     UnloadModel(candleModel);
     UnloadModel(mirrorModel);
+    UnloadModel(keypadModel);
     CloseAudioDevice();
     CloseWindow();
     return 0;

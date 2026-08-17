@@ -7,6 +7,7 @@ public:
     void AddItem(const Item& item);
     bool HasItem(int id) const;
     const std::vector<Item>& GetItems() const { return items; }
+    void Clear() { items.clear(); }
 
 private:
     std::vector<Item> items;
