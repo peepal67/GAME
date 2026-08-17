@@ -27,6 +27,7 @@ const char* kchandelierModelPath = "assets/models/Chandelier.obj";
 const char* kcandleModelPath = "assets/models/candle1.obj";
 const char* kmirrorModelPath = "assets/models/Mirror.obj";
 const char* kkeypadModelPath = "assets/models/keypad.obj";
+const char* kDoorOpenSoundPath = "assets/sounds/door.wav";
 
 
 }
@@ -178,7 +179,7 @@ int main(void)
     Lever lever3(lever3StartPos, GameColor::GC_RED, GameColor::GC_ORANGE);
     std::vector<Lever*> levers = { &lever1, &lever2, &lever3 };
 
-    Door doorToC({-hallHalfWidth, 3.0f, roomCGapZ}, {0.18f, 6.0f, roomCGapHalf * 2}, true, -1, &doorTexture);
+    Door doorToC({-hallHalfWidth, 3.0f, roomCGapZ}, {0.18f, 6.0f, roomCGapHalf * 2}, true, -1, &doorTexture,kDoorOpenSoundPath);
     bool exitCodeKnown = false;
 
     std::vector<Wall*> roomCWalls;
@@ -197,7 +198,7 @@ int main(void)
     Room roomB;
     roomB.BuildRoomWithDoor({0, 0, -52}, 26.0f, 26.0f, 6.5f, 4.0f, 6.0f,
                              true, -1, &wallTexture, &doorTexture, &floorTexture, &ceilingTexture,
-                             nullptr, true, false);
+                             kDoorOpenSoundPath, true, false);
 
     // Both sides of every gate are now walkable (isPassable = true) - the
     // wrong side doesn't block movement, it kills the player on touch
@@ -223,7 +224,7 @@ int main(void)
     Room roomD;
     roomD.BuildRoomWithDoor({0, 0, -78}, 26.0f, 26.0f, 6.5f, 4.0f, 6.0f,
                              false, -1, &wallTexture, &doorTexture, &floorTexture, &ceilingTexture,
-                             nullptr, true, true);
+                             kDoorOpenSoundPath, true, true);
 
     std::vector<Note*> notes;
     notes.push_back(new Note({-4, 0.2f, 0}, "The old records show the year was 19__."));
