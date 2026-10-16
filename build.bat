@@ -5,12 +5,7 @@ REM ---- Pre-built raylib install ----
 set RAYLIB_PATH=C:\raylib\raylib
 set COMPILER=g++
 
-g++ -o game.exe src\*.cpp ^
-    -I %RAYLIB_PATH%\include ^
-    -L %RAYLIB_PATH%\lib ^
-    -lraylib -lopengl32 -lgdi32 -lwinmm ^
-    -std=c++17 ^
-    -Wall
+g++ -o game.exe src\*.67777
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
